@@ -1,3 +1,11 @@
+const mongoose = require("mongoose");
+
+mongoose.connect("mongodb+srv://rahulraghav0537_db_user:ZLNOMzBQuZmwt8KC@cluster0.qewvqgn.mongodb.net/?appName=Cluster0")
+.then(() => console.log("MongoDB Connected"))
+.catch(err => console.log(err));
+
+
+
 const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
@@ -6,20 +14,34 @@ const path = require("path");
 const app = express();
 
 app.use(cors());
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "home.html"));
+});
+
+app.get("/r/:slug", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+app.get("/inbox/:slug", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "inbox.html"));
+});
+
 app.use(express.static("public"));
 app.use("/audio", express.static("uploads"));
 
+/* STORAGE FOR AUDIO FILES */
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination: function (req, file, cb) {
     cb(null, "uploads/");
   },
-  filename: (req, file, cb) => {
+  filename: function (req, file, cb) {
     cb(null, Date.now() + ".webm");
-  },
+  }
 });
 
 const upload = multer({ storage });
 
+/* TEMP MESSAGE STORAGE */
 let messages = [];
 
 /* SEND MESSAGE */
@@ -37,14 +59,16 @@ app.post("/send-message/:slug", upload.single("audio"), (req, res) => {
 
   messages.push(message);
 
+  console.log("New message:", message);
+
   res.json({
-    message: "Message received",
+    success: true,
     file: audio
   });
 
 });
 
-/* GET MESSAGES FOR INBOX */
+/* GET MESSAGES */
 app.get("/messages/:slug", (req, res) => {
 
   const slug = req.params.slug;
@@ -55,7 +79,7 @@ app.get("/messages/:slug", (req, res) => {
 
 });
 
-/* RECORDING PAGE */
+/* MESSAGE PAGE */
 app.get("/r/:slug", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
@@ -64,7 +88,13 @@ app.get("/r/:slug", (req, res) => {
 app.get("/inbox/:slug", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "inbox.html"));
 });
+// route for home page
+app.get("/", (req,res)=>{
+  res.sendFile(path.join(__dirname,"public","home.html"));
+});
 
-app.listen(3000, () => {
-  console.log("Server running on http://localhost:3000");
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log("Server running on port " + PORT);
 });

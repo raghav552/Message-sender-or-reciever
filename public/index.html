@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>Send Voice Message</title>
+</head>
+
+<body>
+
+<h2>Send Voice Message 🎤</h2>
+
+<input type="text" id="name" placeholder="Your name (optional)">
+
+<br><br>
+
+<button id="start">Start Recording</button>
+<button id="stop">Stop</button>
+<button id="send">Send Message</button>
+
+<script>
+
+let mediaRecorder;
+let audioChunks = [];
+
+const slug = window.location.pathname.split("/")[2];
+
+if(!slug){
+  alert("Invalid link. Use /r/yourname");
+}
+
+/* START RECORDING */
+document.getElementById("start").onclick = async () => {
+
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+  mediaRecorder = new MediaRecorder(stream);
+
+  audioChunks = [];
+
+  mediaRecorder.ondataavailable = e => {
+    audioChunks.push(e.data);
+  };
+
+  mediaRecorder.start();
+
+};
+
+/* STOP RECORDING */
+document.getElementById("stop").onclick = () => {
+
+  if(mediaRecorder){
+    mediaRecorder.stop();
+  }
+
+};
+
+/* SEND MESSAGE */
+document.getElementById("send").onclick = async () => {
+
+  if(!slug){
+    alert("Invalid page link");
+    return;
+  }
+
+  if(audioChunks.length === 0){
+    alert("Please record a message first");
+    return;
+  }
+
+  const blob = new Blob(audioChunks, { type: "audio/webm" });
+
+  const formData = new FormData();
+
+  formData.append("audio", blob);
+  formData.append("name", document.getElementById("name").value);
+
+  await fetch("/send-message/" + slug, {
+    method: "POST",
+    body: formData
+  });
+
+  alert("Message sent!");
+
+};
+
+</script>
+
+</body>
+
+</html>
